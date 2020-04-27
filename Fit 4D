@@ -1,0 +1,118 @@
+Workflow - Export Fit4d Fulfillment Files to Ceceliahealth [patExportTransferFit4DFilesCeceliahealth]
+
+ 
+This workflow is transferring 4 different files to the S3 path captured in option - Fit4dOutgoingPath [inbound/patient/fit4d]
+1.	NOVO_FIT4D_ALL_CFFLT_STDPDLM_[Date in Format YYYYMMDD] _[No of Records in File].txt
+2.	NOVO_FIT4D_SAX_SAX_CALL1_[Date in Format YYYYMMDD] _[No of Records in File].txt
+3.	STD_OPT_ FITDCDLM _[Date in Format YYYYMMDD] _[No of Records in File].txt
+4.	SMS_OPT_ FITD69637_[Date in Format YYYYMMDD] _[No of Records in File].txt
+
+ 
+Logic for transfer of file - NOVO_FIT4D_ALL_CFFLT_STDPDLM_*.txt
+
+ 
+
+1.	From Delivery logs (Recipient Patient), the following records are first considered.
+•	All records with delivery code in - EOZEM_FIT4D_PH,OZEM_FIT4D_PH,XLTP_FIT4D_PH,TRS_FIT4D_PH,LEV_FIT4D_PH,VIC_FIT4D_PH,NV_FIT4D_PH,ETRS_FIT4D_PH,ELEV_FIT4D_PH,FISP_FIT4D_PH,ENV_FIT4D_PH,EVIC_FIT4D_PH,EFISP_FIT4D_PH
+•	Date portion of records event date = Date portion of records current date
+
+2.	The following columns are derived or added to target data temporary table.
+ 
+
+3.	The qualified records are then inner joined with table “Recipient Source” on column “@transactionId”
+•	The following columns from join table Recipient Source are added to the target data temporary table.
+ 
+
+4.	The Data Extraction Activity is configured as below –
+
+File Name Expression:
+ 
+
+Output File Columns Sequence and Values:
+ 
+ 
+ 
+
+5.	PGP encryption is then employed on generated file using the key identifier stored in option - nniPgpFit4dPublicKey
+6.	The encrypted file is then transferred to the S3 path captured in option - Fit4dOutgoingPath [inbound/patient/fit4d]
+ 
+Logic for transfer of file - NOVO_FIT4D_SAX_SAX_CALL1_*.txt
+
+ 
+
+1.	From Delivery logs (Recipient Patient), the following records are first considered.
+•	All records with delivery code in - RET_PH1_SAX
+•	Date portion of records event date = Date portion of records current date
+
+2.	The following columns are derived or added to target data temporary table.
+ 
+
+3.	The qualified records are then outer joined with table “Recipient Source” on conditions as shown below –
+
+ 
+
+•	The following columns from join table Recipient Source are added to the target data temporary table.
+ 
+•	Best Time to Call expression is then derived as below –
+
+Iif(@answerValue='MRN','MRN' ,Iif(@answerValue='AFTN','AFTN' ,'' ) )
+
+4.	The Data Extraction Activity is configured as below –
+
+File Name Expression:
+ 
+
+Output File Columns Sequence and Values:
+
+ 
+
+
+5.	PGP encryption is then employed on generated file using the key identifier stored in option - nniPgpFit4dPublicKey
+6.	The encrypted file is then transferred to the S3 path captured in option - Fit4dOutgoingPath [inbound/patient/fit4d]
+ 
+Logic for transfer of file - STD_OPT_ FITDCDLM_*.txt
+
+ 
+
+1.	From Delivery logs (Recipient Patient), the following records are first considered.
+•	All records with delivery code in - EOZEM_FIT4D_PH,OZEM_FIT4D_PH,XLTP_FIT4D_PH,TRS_FIT4D_PH,LEV_FIT4D_PH,VIC_FIT4D_PH,NV_FIT4D_PH,ETRS_FIT4D_PH,ELEV_FIT4D_PH,FISP_FIT4D_PH,ENV_FIT4D_PH,EVIC_FIT4D_PH,EFISP_FIT4D_PH,RET_PH1_SAX
+•	Date portion of records event date = Date portion of records current date minus 14 days
+•	Corresponding Recipient Patient record’s blackListEmail or blackListPostalEmail is set as True
+
+2.	The following columns are derived or added to target data temporary table.
+ 
+
+3.	The Data Extraction Activity is configured as below –
+
+File Name Expression:
+ 
+
+Output File Columns Sequence and Values:
+ 
+
+4.	PGP encryption is then employed on generated file using the key identifier stored in option - nniPgpFit4dPublicKey
+5.	The encrypted file is then transferred to the S3 path captured in option - Fit4dOutgoingPath [inbound/patient/fit4d]
+ 
+Logic for transfer of file - SMS_OPT_ FITD69637_*.txt
+
+ 
+
+1.	From Patient Recipient short code consent, the following records are first considered.
+•	Short Code equal to 69637
+•	Consent equal to No
+•	Date portion of last modified date is greater than or equal to date portion of current date minus 7 days.
+
+2.	The following columns are derived or added to target data temporary table.
+ 
+
+3.	The Data Extraction Activity is configured as below –
+
+File Name Expression:
+ 
+
+Output File Columns Sequence and Values:
+ 
+
+4.	PGP encryption is then employed on generated file using the key identifier stored in option - nniPgpFit4dPublicKey
+5.	The encrypted file is then transferred to the S3 path captured in option - Fit4dOutgoingPath [inbound/patient/fit4d]
+
